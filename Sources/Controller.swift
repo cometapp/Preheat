@@ -8,13 +8,13 @@ import UIKit
 public class Controller<V where V: UIScrollView, V: Preheated> : NSObject {
     /// Gets called when the preheat window changes. Provides an array of index paths that were added and that were removed from the previous preheat window. Index paths are ordered by the distance to the viewport.
     public var handler: ((added: [IndexPath], removed: [IndexPath]) -> Void)?
-
+    
     /// The view that the receiver was initialized with.
     public let view: V
-
+    
     /// Currently preheated index paths.
     public private(set) var indexPaths = [IndexPath]()
-
+    
     /// The proportion of the scroll view's width (or height for views with vertical orientation) used as a preheating window width (or height respectively).
     public var preheatRectSizeRatio: CGFloat = 1.0
     
@@ -34,18 +34,18 @@ public class Controller<V where V: UIScrollView, V: Preheated> : NSObject {
     }
     
     private var previousOffset: CGPoint?
-
+    
     deinit {
         view.removeObserver(self, forKeyPath: "contentOffset", context: nil)
     }
-
+    
     /// Initializes the receiver with a given view.
     public init(view: V) {
         self.view = view
         super.init()
         self.view.addObserver(self, forKeyPath: "contentOffset", options: [.new], context: nil)
     }
-
+    
     /// Removes all index paths without signalling the delegate. Then updates preheat rect (if enabled).
     public func reset() {
         indexPaths.removeAll()
@@ -54,7 +54,7 @@ public class Controller<V where V: UIScrollView, V: Preheated> : NSObject {
             update()
         }
     }
-
+    
     override public func observeValue(forKeyPath keyPath: String?, of object: AnyObject?, change: [NSKeyValueChangeKey : AnyObject]?, context: UnsafeMutablePointer<Void>?) {
         if object === view {
             if enabled {
@@ -71,8 +71,8 @@ public class Controller<V where V: UIScrollView, V: Preheated> : NSObject {
         }
         let isScrollingForward = view.isScrollingForward(previousOffset: previousOffset)
         let preheatRect = view.preheatingRect(isScrollingForward: isScrollingForward, sizeRatio: preheatRectSizeRatio)
-        let indexPaths = Set(view.indexPaths(in: preheatRect)).subtracting(view.indexPathsForVisibleItems())
-        updateIndexPaths(indexPaths.sorted(isOrderedBefore: { // sort in scroll direction
+        let indexPaths = Set(view.indexPaths(in: preheatRect)).subtracting(view.indexPathsForVisibleItems)
+        updateIndexPaths(indexPaths.sorted(by: { // sort in scroll direction
             if isScrollingForward {
                 return $0.section < $1.section || $0.item < $1.item
             } else {
@@ -93,7 +93,7 @@ public class Controller<V where V: UIScrollView, V: Preheated> : NSObject {
         let margin = (view.orientation == .vertical ? view.bounds.height : view.bounds.width) * updateRatio
         return distance(view.contentOffset, previousOffset) > margin
     }
-
+    
     private func updateIndexPaths(_ newIndexPaths: [IndexPath]) {
         let added = newIndexPaths.filter { !indexPaths.contains($0) }
         let removed = indexPaths.filter { !newIndexPaths.contains($0) }
@@ -136,7 +136,7 @@ public enum ScrollOrientation {
 public protocol Preheated {
     var orientation: ScrollOrientation { get }
     func indexPaths(in rect: CGRect) -> [IndexPath]
-    func indexPathsForVisibleItems() -> [IndexPath]
+    var indexPathsForVisibleItems: [IndexPath] { get }
 }
 
 
@@ -147,7 +147,7 @@ extension UICollectionView: Preheated {
         case .horizontal: return .horizontal
         }
     }
-
+    
     public func indexPaths(in rect: CGRect) -> [IndexPath] {
         guard let attributes = collectionViewLayout.layoutAttributesForElements(in: rect) else {
             return []
@@ -165,8 +165,8 @@ extension UITableView: Preheated {
     public func indexPaths(in rect: CGRect) -> [IndexPath] {
         return indexPathsForRows(in: rect) ?? []
     }
-
-    public func indexPathsForVisibleItems() -> [IndexPath] {
+    
+    public var indexPathsForVisibleItems: [IndexPath] {
         return indexPathsForVisibleRows ?? []
     }
 }

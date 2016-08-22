@@ -56,15 +56,11 @@ public class Controller<V> : NSObject where V: UIScrollView, V: Preheated {
     }
 
     public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if object as AnyObject === view {
-            if enabled {
-                update()
-            }
-        } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: nil)
+        if enabled {
+            update()
         }
     }
-    
+
     private func update() {
         guard shouldUpdatePreheatRect() else {
             return

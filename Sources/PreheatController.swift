@@ -69,8 +69,8 @@ public class Controller<V where V: UIScrollView, V: Preheated> : NSObject {
         guard shouldUpdatePreheatRect() else {
             return
         }
-        let isScrollingForward = view.isScrollingForward(previousOffset: previousOffset)
-        let preheatRect = view.preheatingRect(isScrollingForward: isScrollingForward, sizeRatio: preheatRectSizeRatio)
+        let isScrollingForward = view.isScrollingForward(previousOffset)
+        let preheatRect = view.preheatingRect(isScrollingForward, sizeRatio: preheatRectSizeRatio)
         let indexPaths = Set(view.indexPaths(in: preheatRect)).subtracting(view.indexPathsForVisibleItems)
         updateIndexPaths(indexPaths.sorted(by: { // sort in scroll direction
             if isScrollingForward {
